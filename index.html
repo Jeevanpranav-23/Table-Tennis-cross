@@ -264,8 +264,8 @@
     let highScores = [];
 
     // Track player activity
-    let player1LastMove = Date.now();
-    let player2LastMove = Date.now();
+    let player1LastMove = null; // Initialize as null
+    let player2LastMove = null; // Initialize as null
     const inactivityThreshold = 5000; // 5 seconds
 
     // Automatically record moves
@@ -319,6 +319,7 @@
           ballX <= paddle1Right // Ball's left edge is to the left of the paddle's right edge
         ) {
           ballSpeedY = -ballSpeedY; // Reverse the ball's vertical direction
+          player1LastMove = Date.now(); // Update last move time
         }
 
         // Collision with bottom paddle (Player 2)
@@ -328,13 +329,14 @@
           ballX <= paddle2Right // Ball's left edge is to the left of the paddle's right edge
         ) {
           ballSpeedY = -ballSpeedY; // Reverse the ball's vertical direction
+          player2LastMove = Date.now(); // Update last move time
         }
 
         // Ball out of bounds (top or bottom)
         if (ballY <= 0 || ballY >= gameHeight) {
           const currentTime = Date.now();
-          const player1Active = currentTime - player1LastMove <= inactivityThreshold;
-          const player2Active = currentTime - player2LastMove <= inactivityThreshold;
+          const player1Active = player1LastMove !== null && currentTime - player1LastMove <= inactivityThreshold;
+          const player2Active = player2LastMove !== null && currentTime - player2LastMove <= inactivityThreshold;
 
           // Only update score if both players are active
           if (player1Active && player2Active) {
@@ -445,6 +447,11 @@
       recordedMoves = [];
       isReplaying = false;
       replayIndex = 0;
+
+      // Reset player activity tracking
+      player1LastMove = null;
+      player2LastMove = null;
+      activityStatus.textContent = "Waiting for players to start...";
     }
 
     // Reset Game (reset scores and ball position)
@@ -476,8 +483,8 @@
     // Check player activity
     function checkPlayerActivity() {
       const currentTime = Date.now();
-      const player1Active = currentTime - player1LastMove <= inactivityThreshold;
-      const player2Active = currentTime - player2LastMove <= inactivityThreshold;
+      const player1Active = player1LastMove !== null && currentTime - player1LastMove <= inactivityThreshold;
+      const player2Active = player2LastMove !== null && currentTime - player2LastMove <= inactivityThreshold;
 
       if (!player1Active || !player2Active) {
         activityStatus.textContent = `Inactive: ${
