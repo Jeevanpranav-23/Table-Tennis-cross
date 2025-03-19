@@ -376,19 +376,19 @@
     document.addEventListener('keydown', (e) => {
       switch (e.key) {
         case 's': // Move top paddle left
-          paddle1X = Math.max(0, paddle1X - 5);
+          paddle1X = Math.max(0, paddle1X - 2); // Reduced sensitivity
           player1LastMove = Date.now();
           break;
         case 'x': // Move top paddle right
-          paddle1X = Math.min(gameWidth - paddleWidth, paddle1X + 5);
+          paddle1X = Math.min(gameWidth - paddleWidth, paddle1X + 2); // Reduced sensitivity
           player1LastMove = Date.now();
           break;
         case 'ArrowLeft': // Move bottom paddle left
-          paddle2X = Math.max(0, paddle2X - 5);
+          paddle2X = Math.max(0, paddle2X - 2); // Reduced sensitivity
           player2LastMove = Date.now();
           break;
         case 'ArrowRight': // Move bottom paddle right
-          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 5);
+          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 2); // Reduced sensitivity
           player2LastMove = Date.now();
           break;
       }
