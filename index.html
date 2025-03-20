@@ -57,32 +57,36 @@
     }
     .game-area {
       position: relative;
-      width: 90%;
-      max-width: 600px; /* Adjusted for horizontal layout */
-      height: 300px; /* Adjusted for horizontal layout */
+      width: 90%; /* Adjust width for mobile */
+      max-width: 300px; /* Compact size for mobile */
+      height: 300px; /* Same as width for square shape */
       background-color: black;
       border: 5px solid white;
       overflow: hidden;
     }
     .center-line {
       position: absolute;
-      width: 100%; /* Horizontal line */
-      height: 2px; /* Thin line */
+      width: 2px; /* Vertical line */
+      height: 100%; /* Full height */
       background-color: white;
-      top: 50%;
-      transform: translateY(-50%);
+      left: 50%;
+      transform: translateX(-50%);
     }
     .paddle {
       position: absolute;
-      font-size: 30px;
-      user-select: none;
+      width: 40px; /* Paddle width */
+      height: 40px; /* Paddle height */
+      font-size: 2rem; /* Emoji size */
+      text-align: center;
+      line-height: 40px; /* Center emoji vertically */
+      user-select: none; /* Prevent text selection */
     }
-    #paddle1 { top: 5px; left: 50%; transform: translateX(-50%); } /* Top paddle */
-    #paddle2 { bottom: 5px; left: 50%; transform: translateX(-50%); } /* Bottom paddle */
+    #paddle1 { left: 10px; top: 50%; transform: translateY(-50%); } /* Left paddle */
+    #paddle2 { right: 10px; top: 50%; transform: translateY(-50%); } /* Right paddle */
     .ball {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 15px; /* Ball width */
+      height: 15px; /* Ball height */
       background-color: white;
       border-radius: 50%;
       box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
@@ -181,13 +185,15 @@
     <h2>How to Play:</h2>
     <p><strong>Controls for Laptop:</strong></p>
     <ul>
-      <li><strong>Player 1 (Top Paddle):</strong> Use <code>S</code> to move left and <code>X</code> to move right.</li>
-      <li><strong>Player 2 (Bottom Paddle):</strong> Use <code>Arrow Left</code> to move left and <code>Arrow Right</code> to move right.</li>
+      <li><strong>Player 1 (Left Paddle):</strong> Use <code>W</code> (up), <code>S</code> (down), <code>A</code> (left), and <code>D</code> (right).</li>
+      <li><strong>Player 2 (Right Paddle):</strong> Use <code>Arrow Up</code> (up), <code>Arrow Down</code> (down), <code>Arrow Left</code> (left), and <code>Arrow Right</code> (right).</li>
+      <li><strong>Serve the Ball:</strong> Press <code>Space</code> to serve the ball.</li>
     </ul>
     <p><strong>Controls for Phone:</strong></p>
     <ul>
-      <li><strong>Player 1 (Top Paddle):</strong> Touch and drag the top paddle to move it.</li>
-      <li><strong>Player 2 (Bottom Paddle):</strong> Touch and drag the bottom paddle to move it.</li>
+      <li><strong>Player 1 (Left Paddle):</strong> Touch and drag the left paddle to move it.</li>
+      <li><strong>Player 2 (Right Paddle):</strong> Touch and drag the right paddle to move it.</li>
+      <li><strong>Serve the Ball:</strong> Tap the screen to serve the ball.</li>
     </ul>
     <button onclick="startGameAfterPopup()">Got it! Start Game</button>
   </div>
@@ -204,8 +210,8 @@
   <div class="game-container">
     <div class="game-area">
       <div class="center-line"></div>
-      <div class="paddle" id="paddle1">🏓</div>
-      <div class="paddle" id="paddle2">🏓</div>
+      <div class="paddle" id="paddle1">🏓</div> <!-- Left paddle -->
+      <div class="paddle" id="paddle2">🏓</div> <!-- Right paddle -->
       <div class="ball" id="ball"></div>
     </div>
     <div class="high-score-board">
@@ -246,17 +252,21 @@
     const popup = document.getElementById('popup');
     const overlay = document.getElementById('overlay');
 
-    let paddle1X = 50; // Horizontal position for top paddle
-    let paddle2X = 50; // Horizontal position for bottom paddle
+    let paddle1X = 10; // Horizontal position for left paddle
+    let paddle1Y = 50; // Vertical position for left paddle
+    let paddle2X = gameArea.offsetWidth - 50; // Horizontal position for right paddle
+    let paddle2Y = 50; // Vertical position for right paddle
     let ballX = 50;
     let ballY = 50;
-    let ballSpeedX = 3;
-    let ballSpeedY = 3;
+    let ballSpeed = 3; // Speed of the ball
+    let ballAngle = Math.random() * 2 * Math.PI; // Random initial angle (0 to 360 degrees)
 
     let score1 = 0;
     let score2 = 0;
 
-    const paddleWidth = paddle1.offsetWidth;
+    const paddleWidth = 40; // Paddle width
+    const paddleHeight = 40; // Paddle height
+    const ballSize = 15; // Ball size
     const gameWidth = gameArea.offsetWidth;
     const gameHeight = gameArea.offsetHeight;
 
@@ -274,7 +284,7 @@
     let recordedMoves = [];
     const recordMove = () => {
       if (!isReplaying) {
-        recordedMoves.push({ paddle1X, paddle2X, ballX, ballY });
+        recordedMoves.push({ paddle1X, paddle1Y, paddle2X, paddle2Y, ballX, ballY });
       }
     };
 
@@ -293,61 +303,79 @@
 
     // Update paddle positions
     function updatePaddles() {
-      paddle1.style.left = `${paddle1X}%`;
-      paddle2.style.left = `${paddle2X}%`;
+      paddle1.style.left = `${paddle1X}px`;
+      paddle1.style.top = `${paddle1Y}px`;
+      paddle2.style.left = `${paddle2X}px`;
+      paddle2.style.top = `${paddle2Y}px`;
+    }
+
+    // Serve the ball
+    function serveBall() {
+      if (ballSpeed === 0) {
+        ballSpeed = 3; // Set ball speed
+        ballAngle = Math.random() * 2 * Math.PI; // Random initial angle
+        feedback.textContent = "Game started!";
+      }
     }
 
     // Move ball
     function moveBall() {
       if (!isReplaying) {
+        // Calculate ball movement using angle
+        const ballSpeedX = ballSpeed * Math.cos(ballAngle);
+        const ballSpeedY = ballSpeed * Math.sin(ballAngle);
+
         ballX += ballSpeedX;
         ballY += ballSpeedY;
 
-        // Ball collision with walls (left and right)
-        if (ballX <= 0 || ballX >= gameWidth - 10) {
-          ballSpeedX = -ballSpeedX;
+        // Ball collision with walls (top and bottom)
+        if (ballY <= 0 || ballY >= gameHeight - ballSize) {
+          ballAngle = -ballAngle; // Reverse vertical direction
         }
 
         // Ball collision with paddles
         const paddle1Left = paddle1X;
         const paddle1Right = paddle1X + paddleWidth;
+        const paddle1Top = paddle1Y;
+        const paddle1Bottom = paddle1Y + paddleHeight;
+
         const paddle2Left = paddle2X;
         const paddle2Right = paddle2X + paddleWidth;
+        const paddle2Top = paddle2Y;
+        const paddle2Bottom = paddle2Y + paddleHeight;
 
-        // Collision with top paddle (Player 1)
+        // Collision with left paddle (Player 1)
         if (
-          ballY <= 15 && // Ball is near the top
-          ballX + 10 >= paddle1Left && // Ball's right edge is to the right of the paddle's left edge
-          ballX <= paddle1Right // Ball's left edge is to the left of the paddle's right edge
+          ballX + ballSize >= paddle1Left && ballX <= paddle1Right && // Ball is within paddle width
+          ballY + ballSize >= paddle1Top && ballY <= paddle1Bottom // Ball is within paddle height
         ) {
-          ballSpeedY = -ballSpeedY; // Reverse the ball's vertical direction
+          ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
           player1LastMove = Date.now(); // Update last move time
         }
 
-        // Collision with bottom paddle (Player 2)
+        // Collision with right paddle (Player 2)
         if (
-          ballY >= gameHeight - 25 && // Ball is near the bottom
-          ballX + 10 >= paddle2Left && // Ball's right edge is to the right of the paddle's left edge
-          ballX <= paddle2Right // Ball's left edge is to the left of the paddle's right edge
+          ballX + ballSize >= paddle2Left && ballX <= paddle2Right && // Ball is within paddle width
+          ballY + ballSize >= paddle2Top && ballY <= paddle2Bottom // Ball is within paddle height
         ) {
-          ballSpeedY = -ballSpeedY; // Reverse the ball's vertical direction
+          ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
           player2LastMove = Date.now(); // Update last move time
         }
 
-        // Ball out of bounds (top or bottom)
-        if (ballY <= 0 || ballY >= gameHeight) {
+        // Ball out of bounds (left or right)
+        if (ballX <= 0 || ballX >= gameWidth) {
           const currentTime = Date.now();
           const player1Active = player1LastMove !== null && currentTime - player1LastMove <= inactivityThreshold;
           const player2Active = player2LastMove !== null && currentTime - player2LastMove <= inactivityThreshold;
 
           // Only update score if both players are active
           if (player1Active && player2Active) {
-            if (ballY <= 0) {
+            if (ballX <= 0) {
               score2++;
               player2ScoreDisplay.textContent = score2;
               feedback.textContent = `${player2Input.value || "Player 2"} Scores!`;
               updateHighScores(player2Input.value || "Player 2", score2);
-            } else if (ballY >= gameHeight) {
+            } else if (ballX >= gameWidth) {
               score1++;
               player1ScoreDisplay.textContent = score1;
               feedback.textContent = `${player1Input.value || "Player 1"} Scores!`;
@@ -366,30 +394,49 @@
 
     // Reset ball position
     function resetBall() {
-      ballX = gameWidth / 2 - 5;
-      ballY = gameHeight / 2 - 5;
-      ballSpeedX = Math.random() > 0.5 ? 3 : -3;
-      ballSpeedY = Math.random() > 0.5 ? 3 : -3;
+      ballX = gameWidth / 2 - ballSize / 2;
+      ballY = gameHeight / 2 - ballSize / 2;
+      ballSpeed = 0; // Stop the ball
+      ballAngle = Math.random() * 2 * Math.PI; // Random initial angle
     }
 
     // Keyboard controls for desktop
     document.addEventListener('keydown', (e) => {
       switch (e.key) {
-        case 's': // Move top paddle left
-          paddle1X = Math.max(0, paddle1X - 2); // Reduced sensitivity
+        case 'w': // Move left paddle up
+          paddle1Y = Math.max(0, paddle1Y - 10);
           player1LastMove = Date.now();
           break;
-        case 'x': // Move top paddle right
-          paddle1X = Math.min(gameWidth - paddleWidth, paddle1X + 2); // Reduced sensitivity
+        case 's': // Move left paddle down
+          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 10);
           player1LastMove = Date.now();
           break;
-        case 'ArrowLeft': // Move bottom paddle left
-          paddle2X = Math.max(0, paddle2X - 2); // Reduced sensitivity
+        case 'a': // Move left paddle left
+          paddle1X = Math.max(0, paddle1X - 10);
+          player1LastMove = Date.now();
+          break;
+        case 'd': // Move left paddle right
+          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 10); // Prevent crossing midline
+          player1LastMove = Date.now();
+          break;
+        case 'ArrowUp': // Move right paddle up
+          paddle2Y = Math.max(0, paddle2Y - 10);
           player2LastMove = Date.now();
           break;
-        case 'ArrowRight': // Move bottom paddle right
-          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 2); // Reduced sensitivity
+        case 'ArrowDown': // Move right paddle down
+          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 10);
           player2LastMove = Date.now();
+          break;
+        case 'ArrowLeft': // Move right paddle left
+          paddle2X = Math.max(gameWidth / 2, paddle2X - 10); // Prevent crossing midline
+          player2LastMove = Date.now();
+          break;
+        case 'ArrowRight': // Move right paddle right
+          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 10);
+          player2LastMove = Date.now();
+          break;
+        case ' ': // Serve the ball (Space key)
+          serveBall();
           break;
       }
       updatePaddles();
@@ -397,15 +444,20 @@
 
     // Touch controls for mobile
     let touchStartX1 = 0;
+    let touchStartY1 = 0;
     let touchStartX2 = 0;
+    let touchStartY2 = 0;
 
     paddle1.addEventListener('touchstart', (e) => {
       touchStartX1 = e.touches[0].clientX - paddle1X;
+      touchStartY1 = e.touches[0].clientY - paddle1Y;
     });
 
     paddle1.addEventListener('touchmove', (e) => {
       const touchX = e.touches[0].clientX - touchStartX1;
-      paddle1X = Math.max(0, Math.min(gameWidth - paddleWidth, touchX));
+      const touchY = e.touches[0].clientY - touchStartY1;
+      paddle1X = Math.max(0, Math.min(gameWidth / 2 - paddleWidth, touchX)); // Prevent crossing midline
+      paddle1Y = Math.max(0, Math.min(gameHeight - paddleHeight, touchY));
       updatePaddles();
       player1LastMove = Date.now();
       e.preventDefault();
@@ -413,14 +465,22 @@
 
     paddle2.addEventListener('touchstart', (e) => {
       touchStartX2 = e.touches[0].clientX - paddle2X;
+      touchStartY2 = e.touches[0].clientY - paddle2Y;
     });
 
     paddle2.addEventListener('touchmove', (e) => {
       const touchX = e.touches[0].clientX - touchStartX2;
-      paddle2X = Math.max(0, Math.min(gameWidth - paddleWidth, touchX));
+      const touchY = e.touches[0].clientY - touchStartY2;
+      paddle2X = Math.max(gameWidth / 2, Math.min(gameWidth - paddleWidth, touchX)); // Prevent crossing midline
+      paddle2Y = Math.max(0, Math.min(gameHeight - paddleHeight, touchY));
       updatePaddles();
       player2LastMove = Date.now();
       e.preventDefault();
+    });
+
+    // Serve the ball on screen tap
+    gameArea.addEventListener('touchstart', () => {
+      serveBall();
     });
 
     // Replay moves
@@ -508,7 +568,9 @@
       } else if (replayIndex < recordedMoves.length) {
         const move = recordedMoves[replayIndex];
         paddle1X = move.paddle1X;
+        paddle1Y = move.paddle1Y;
         paddle2X = move.paddle2X;
+        paddle2Y = move.paddle2Y;
         ballX = move.ballX;
         ballY = move.ballY;
         updatePaddles();
