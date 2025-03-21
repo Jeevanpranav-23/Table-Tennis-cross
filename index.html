@@ -303,9 +303,9 @@
     // Update paddle positions
     function updatePaddles() {
       paddle1.style.left = `${paddle1X}px`;
-      paddle1.style.top = `${paddle1Y}%`;
+      paddle1.style.top = `${paddle1Y}px`;
       paddle2.style.left = `${paddle2X}px`;
-      paddle2.style.top = `${paddle2Y}%`;
+      paddle2.style.top = `${paddle2Y}px`;
     }
 
     // Serve the ball
@@ -409,35 +409,35 @@
     document.addEventListener('keydown', (e) => {
       switch (e.key) {
         case 'w': // Move left paddle up
-          paddle1Y = Math.max(0, paddle1Y - 2);
+          paddle1Y = Math.max(0, paddle1Y - 5);
           player1LastMove = Date.now();
           break;
         case 's': // Move left paddle down
-          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 2);
+          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 5);
           player1LastMove = Date.now();
           break;
         case 'a': // Move left paddle left
-          paddle1X = Math.max(0, paddle1X - 2);
+          paddle1X = Math.max(0, paddle1X - 5);
           player1LastMove = Date.now();
           break;
         case 'd': // Move left paddle right
-          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 2); // Prevent crossing midline
+          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 5); // Prevent crossing midline
           player1LastMove = Date.now();
           break;
         case 'ArrowUp': // Move right paddle up
-          paddle2Y = Math.max(0, paddle2Y - 2);
+          paddle2Y = Math.max(0, paddle2Y - 5);
           player2LastMove = Date.now();
           break;
         case 'ArrowDown': // Move right paddle down
-          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 2);
+          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 5);
           player2LastMove = Date.now();
           break;
         case 'ArrowLeft': // Move right paddle left
-          paddle2X = Math.max(gameWidth / 2, paddle2X - 2); // Prevent crossing midline
+          paddle2X = Math.max(gameWidth / 2, paddle2X - 5); // Prevent crossing midline
           player2LastMove = Date.now();
           break;
         case 'ArrowRight': // Move right paddle right
-          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 2);
+          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 5);
           player2LastMove = Date.now();
           break;
         case ' ': // Serve the ball (Space key)
@@ -514,6 +514,10 @@
       recordedMoves = [];
       isReplaying = false;
       replayIndex = 0;
+
+      // Reset high scores
+      highScores = [];
+      highScoresBody.innerHTML = "";
 
       // Reset player activity tracking
       player1LastMove = null;
