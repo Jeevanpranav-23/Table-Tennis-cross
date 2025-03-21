@@ -253,11 +253,11 @@
     const overlay = document.getElementById('overlay');
 
     let paddle1X = 10; // Horizontal position for left paddle
-    let paddle1Y = 50; // Vertical position for left paddle
+    let paddle1Y = 130; // Vertical position for left paddle
     let paddle2X = gameArea.offsetWidth - 50; // Horizontal position for right paddle
-    let paddle2Y = 50; // Vertical position for right paddle
-    let ballX = 50;
-    let ballY = 50;
+    let paddle2Y = 130; // Vertical position for right paddle
+    let ballX = gameArea.offsetWidth / 2 - 5; // Center ball horizontally
+    let ballY = gameArea.offsetHeight / 2 - 5; // Center ball vertically
     let ballSpeed = 3; // Speed of the ball
     let ballAngle = Math.random() * 2 * Math.PI; // Random initial angle (0 to 360 degrees)
 
