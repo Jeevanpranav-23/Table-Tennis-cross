@@ -85,8 +85,8 @@
     #paddle2 { right: 10px; top: 50%; transform: translateY(-50%); } /* Right paddle */
     .ball {
       position: absolute;
-      width: 15px; /* Ball width */
-      height: 15px; /* Ball height */
+      width: 10px;
+      height: 10px;
       background-color: white;
       border-radius: 50%;
       box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
@@ -266,7 +266,6 @@
 
     const paddleWidth = 40; // Paddle width
     const paddleHeight = 40; // Paddle height
-    const ballSize = 15; // Ball size
     const gameWidth = gameArea.offsetWidth;
     const gameHeight = gameArea.offsetHeight;
 
@@ -304,9 +303,9 @@
     // Update paddle positions
     function updatePaddles() {
       paddle1.style.left = `${paddle1X}px`;
-      paddle1.style.top = `${paddle1Y}px`;
+      paddle1.style.top = `${paddle1Y}%`;
       paddle2.style.left = `${paddle2X}px`;
-      paddle2.style.top = `${paddle2Y}px`;
+      paddle2.style.top = `${paddle2Y}%`;
     }
 
     // Serve the ball
@@ -329,37 +328,43 @@
         ballY += ballSpeedY;
 
         // Ball collision with walls (top and bottom)
-        if (ballY <= 0 || ballY >= gameHeight - ballSize) {
+        if (ballY <= 0 || ballY >= gameHeight - 10) {
           ballAngle = -ballAngle; // Reverse vertical direction
         }
 
         // Ball collision with paddles
-        const paddle1Left = paddle1X;
-        const paddle1Right = paddle1X + paddleWidth;
-        const paddle1Top = paddle1Y;
-        const paddle1Bottom = paddle1Y + paddleHeight;
-
-        const paddle2Left = paddle2X;
-        const paddle2Right = paddle2X + paddleWidth;
-        const paddle2Top = paddle2Y;
-        const paddle2Bottom = paddle2Y + paddleHeight;
+        const ballRadius = 5; // Ball radius
+        const paddleHeight = 40; // Paddle height
+        const paddleWidth = 40; // Paddle width
 
         // Collision with left paddle (Player 1)
         if (
-          ballX + ballSize >= paddle1Left && ballX <= paddle1Right && // Ball is within paddle width
-          ballY + ballSize >= paddle1Top && ballY <= paddle1Bottom // Ball is within paddle height
+          ballX - ballRadius <= paddle1X + paddleWidth && // Ball is within paddle width
+          ballY + ballRadius >= paddle1Y && // Ball is within paddle height
+          ballY - ballRadius <= paddle1Y + paddleHeight
         ) {
-          ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
-          player1LastMove = Date.now(); // Update last move time
+          if (ballX - ballRadius <= paddle1X + paddleWidth && ballX - ballRadius >= paddle1X) {
+            ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
+            // Adjust ball angle based on where it hits the paddle
+            const hitPosition = (ballY - paddle1Y) / paddleHeight;
+            ballAngle += (hitPosition - 0.5) * 0.5; // Add a slight angle variation
+            player1LastMove = Date.now(); // Update last move time
+          }
         }
 
         // Collision with right paddle (Player 2)
         if (
-          ballX + ballSize >= paddle2Left && ballX <= paddle2Right && // Ball is within paddle width
-          ballY + ballSize >= paddle2Top && ballY <= paddle2Bottom // Ball is within paddle height
+          ballX + ballRadius >= paddle2X && // Ball is within paddle width
+          ballY + ballRadius >= paddle2Y && // Ball is within paddle height
+          ballY - ballRadius <= paddle2Y + paddleHeight
         ) {
-          ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
-          player2LastMove = Date.now(); // Update last move time
+          if (ballX + ballRadius >= paddle2X && ballX + ballRadius <= paddle2X + paddleWidth) {
+            ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
+            // Adjust ball angle based on where it hits the paddle
+            const hitPosition = (ballY - paddle2Y) / paddleHeight;
+            ballAngle += (hitPosition - 0.5) * 0.5; // Add a slight angle variation
+            player2LastMove = Date.now(); // Update last move time
+          }
         }
 
         // Ball out of bounds (left or right)
@@ -394,8 +399,8 @@
 
     // Reset ball position
     function resetBall() {
-      ballX = gameWidth / 2 - ballSize / 2;
-      ballY = gameHeight / 2 - ballSize / 2;
+      ballX = gameWidth / 2 - 5;
+      ballY = gameHeight / 2 - 5;
       ballSpeed = 0; // Stop the ball
       ballAngle = Math.random() * 2 * Math.PI; // Random initial angle
     }
@@ -404,35 +409,35 @@
     document.addEventListener('keydown', (e) => {
       switch (e.key) {
         case 'w': // Move left paddle up
-          paddle1Y = Math.max(0, paddle1Y - 10);
+          paddle1Y = Math.max(0, paddle1Y - 2);
           player1LastMove = Date.now();
           break;
         case 's': // Move left paddle down
-          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 10);
+          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 2);
           player1LastMove = Date.now();
           break;
         case 'a': // Move left paddle left
-          paddle1X = Math.max(0, paddle1X - 10);
+          paddle1X = Math.max(0, paddle1X - 2);
           player1LastMove = Date.now();
           break;
         case 'd': // Move left paddle right
-          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 10); // Prevent crossing midline
+          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 2); // Prevent crossing midline
           player1LastMove = Date.now();
           break;
         case 'ArrowUp': // Move right paddle up
-          paddle2Y = Math.max(0, paddle2Y - 10);
+          paddle2Y = Math.max(0, paddle2Y - 2);
           player2LastMove = Date.now();
           break;
         case 'ArrowDown': // Move right paddle down
-          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 10);
+          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 2);
           player2LastMove = Date.now();
           break;
         case 'ArrowLeft': // Move right paddle left
-          paddle2X = Math.max(gameWidth / 2, paddle2X - 10); // Prevent crossing midline
+          paddle2X = Math.max(gameWidth / 2, paddle2X - 2); // Prevent crossing midline
           player2LastMove = Date.now();
           break;
         case 'ArrowRight': // Move right paddle right
-          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 10);
+          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 2);
           player2LastMove = Date.now();
           break;
         case ' ': // Serve the ball (Space key)
