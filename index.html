@@ -1,79 +1,602 @@
-export default function PingPongGame() {
-  const canvasRef = useRef(null);
-  const [paddleX, setPaddleX] = useState(200);
-  const [ball, setBall] = useState({ x: 250, y: 250, dx: 3, dy: 3 });
-  const [touchStartX, setTouchStartX] = useState(null);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Tennis Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #96ceb4;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      color: black;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-top: 10px;
+      text-transform: uppercase;
+    }
+    .name-inputs {
+      margin: 10px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .player-name-input {
+      width: 150px;
+      padding: 8px;
+      border: 2px solid black;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    .scoreboard {
+      margin: 10px 0;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background-color: white;
+      padding: 8px;
+      display: inline-block;
+      border-radius: 8px;
+    }
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 10px auto;
+      max-width: 100%;
+    }
+    .game-area {
+      position: relative;
+      width: 90%; /* Adjust width for mobile */
+      max-width: 300px; /* Compact size for mobile */
+      height: 300px; /* Same as width for square shape */
+      background-color: black;
+      border: 5px solid white;
+      overflow: hidden;
+    }
+    .center-line {
+      position: absolute;
+      width: 2px; /* Vertical line */
+      height: 100%; /* Full height */
+      background-color: white;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .paddle {
+      position: absolute;
+      width: 40px; /* Paddle width */
+      height: 40px; /* Paddle height */
+      font-size: 2rem; /* Emoji size */
+      text-align: center;
+      line-height: 40px; /* Center emoji vertically */
+      user-select: none; /* Prevent text selection */
+    }
+    #paddle1 { left: 10px; top: 50%; transform: translateY(-50%); } /* Left paddle */
+    #paddle2 { right: 10px; top: 50%; transform: translateY(-50%); } /* Right paddle */
+    .ball {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+    .feedback {
+      font-size: 1rem;
+      margin-top: 5px;
+      color: black;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 1rem;
+      background-color: black;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: grey;
+    }
+    .high-score-board {
+      background-color: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid black;
+      width: 90%;
+      max-width: 300px;
+      margin-top: 10px;
+    }
+    .high-score-board h2 {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+    .high-score-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .high-score-table th {
+      background-color: black;
+      color: white;
+      padding: 5px;
+    }
+    .high-score-table th,
+    .high-score-table td {
+      border: 1px solid black;
+      padding: 5px;
+    }
+    .activity-status {
+      margin-top: 5px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      text-align: left;
+      width: 90%; /* Adjusted for mobile screens */
+      max-width: 400px; /* Maximum width for larger screens */
+    }
+    .popup h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    .popup ul {
+      list-style-type: disc;
+      margin-left: 20px;
+    }
+    .popup button {
+      margin-top: 10px;
+      width: 100%;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <!-- Popup for game instructions -->
+  <div class="overlay" id="overlay"></div>
+  <div class="popup" id="popup">
+    <h2>How to Play:</h2>
+    <p><strong>Controls for Laptop:</strong></p>
+    <ul>
+      <li><strong>Player 1 (Left Paddle):</strong> Use <code>W</code> (up), <code>S</code> (down), <code>A</code> (left), and <code>D</code> (right).</li>
+      <li><strong>Player 2 (Right Paddle):</strong> Use <code>Arrow Up</code> (up), <code>Arrow Down</code> (down), <code>Arrow Left</code> (left), and <code>Arrow Right</code> (right).</li>
+      <li><strong>Serve the Ball:</strong> Press <code>Space</code> to serve the ball.</li>
+    </ul>
+    <p><strong>Controls for Phone:</strong></p>
+    <ul>
+      <li><strong>Player 1 (Left Paddle):</strong> Touch and drag the left paddle to move it.</li>
+      <li><strong>Player 2 (Right Paddle):</strong> Touch and drag the right paddle to move it.</li>
+      <li><strong>Serve the Ball:</strong> Tap the screen to serve the ball.</li>
+    </ul>
+    <button onclick="startGameAfterPopup()">Got it! Start Game</button>
+  </div>
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    const drawPaddle = () => {
-      ctx.fillStyle = "#0095DD";
-      ctx.fillRect(paddleX, canvas.height - 20, 100, 10);
-    };
-
-    const drawBall = () => {
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = "red";
-      ctx.fill();
-      ctx.closePath();
-    };
-
-    const update = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawPaddle();
-      drawBall();
-
-      let newBall = { ...ball, x: ball.x + ball.dx, y: ball.y + ball.dy };
-
-      // Ball collision with walls
-      if (newBall.x < 10 || newBall.x > canvas.width - 10) newBall.dx *= -1;
-      if (newBall.y < 10) newBall.dy *= -1;
-
-      // Ball collision with paddle with better accuracy
-      if (
-        newBall.y + 10 >= canvas.height - 20 &&
-        newBall.x >= paddleX &&
-        newBall.x <= paddleX + 100
-      ) {
-        newBall.dy *= -1;
-        newBall.y = canvas.height - 30; // Adjust position to prevent multiple hits
-
-        // Add slight variation to ball direction based on hit position
-        let hitPosition = (newBall.x - paddleX) / 100;
-        newBall.dx = 6 * (hitPosition - 0.5);
-      }
-
-      // Reset ball if it falls off
-      if (newBall.y > canvas.height) {
-        newBall = { x: 250, y: 250, dx: 3, dy: 3 };
-      }
-
-      setBall(newBall);
-    };
-
-    const gameLoop = setInterval(update, 20);
-    return () => clearInterval(gameLoop);
-  }, [paddleX, ball]);
-
-  const handleTouchMove = (event) => {
-    event.preventDefault(); // Prevent scrolling
-    const rect = canvasRef.current.getBoundingClientRect();
-    const touchX = event.touches[0].clientX - rect.left;
-    setPaddleX(Math.max(0, Math.min(touchX - 50, canvasRef.current.width - 100)));
-  };
-
-  return (
-    <div>
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={500}
-        style={{ background: "#eee", touchAction: "none" }}
-        onTouchMove={handleTouchMove}
-      ></canvas>
+  <h1>🏓 Table Tennis Cross 🏓</h1>
+  <div class="name-inputs">
+    <input type="text" id="player1-input" class="player-name-input" placeholder="Enter Player 1 Name">
+    <input type="text" id="player2-input" class="player-name-input" placeholder="Enter Player 2 Name">
+  </div>
+  <div class="scoreboard">
+    <span id="player1-name">Player 1</span>: <span id="player1-score">0</span> |
+    <span id="player2-name">Player 2</span>: <span id="player2-score">0</span>
+  </div>
+  <div class="game-container">
+    <div class="game-area">
+      <div class="center-line"></div>
+      <div class="paddle" id="paddle1">🏓</div> <!-- Left paddle -->
+      <div class="paddle" id="paddle2">🏓</div> <!-- Right paddle -->
+      <div class="ball" id="ball"></div>
     </div>
-  );
-}
+    <div class="high-score-board">
+      <h2>Highest Scores</h2>
+      <table class="high-score-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="high-scores-body">
+          <!-- High scores will be dynamically added here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <button onclick="newGame()">New Game</button>
+    <button onclick="resetGame()">Reset Game</button>
+    <button onclick="replayMoves()">Replay Moves</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="activity-status" id="activity-status"></div>
+
+  <script>
+    const paddle1 = document.getElementById('paddle1');
+    const paddle2 = document.getElementById('paddle2');
+    const ball = document.getElementById('ball');
+    const gameArea = document.querySelector('.game-area');
+    const player1ScoreDisplay = document.getElementById('player1-score');
+    const player2ScoreDisplay = document.getElementById('player2-score');
+    const feedback = document.getElementById('feedback');
+    const highScoresBody = document.getElementById('high-scores-body');
+    const activityStatus = document.getElementById('activity-status');
+    const player1Input = document.getElementById('player1-input');
+    const player2Input = document.getElementById('player2-input');
+    const popup = document.getElementById('popup');
+    const overlay = document.getElementById('overlay');
+
+    let paddle1X = 10; // Horizontal position for left paddle
+    let paddle1Y = 130; // Vertical position for left paddle
+    let paddle2X = gameArea.offsetWidth - 50; // Horizontal position for right paddle
+    let paddle2Y = 130; // Vertical position for right paddle
+    let ballX = gameArea.offsetWidth / 2 - 5; // Center ball horizontally
+    let ballY = gameArea.offsetHeight / 2 - 5; // Center ball vertically
+    let ballSpeed = 3; // Speed of the ball
+    let ballAngle = Math.random() * 2 * Math.PI; // Random initial angle (0 to 360 degrees)
+
+    let score1 = 0;
+    let score2 = 0;
+
+    const paddleWidth = 40; // Paddle width
+    const paddleHeight = 40; // Paddle height
+    const gameWidth = gameArea.offsetWidth;
+    const gameHeight = gameArea.offsetHeight;
+
+    let isReplaying = false;
+    let replayIndex = 0;
+
+    let highScores = [];
+
+    // Track player activity
+    let player1LastMove = null; // Initialize as null
+    let player2LastMove = null; // Initialize as null
+    const inactivityThreshold = 5000; // 5 seconds
+
+    // Automatically record moves
+    let recordedMoves = [];
+    const recordMove = () => {
+      if (!isReplaying) {
+        recordedMoves.push({ paddle1X, paddle1Y, paddle2X, paddle2Y, ballX, ballY });
+      }
+    };
+
+    // Show popup with instructions
+    function showPopup() {
+      popup.style.display = "block";
+      overlay.style.display = "block";
+    }
+
+    // Start game after popup is acknowledged
+    function startGameAfterPopup() {
+      popup.style.display = "none";
+      overlay.style.display = "none";
+      newGame();
+    }
+
+    // Update paddle positions
+    function updatePaddles() {
+      paddle1.style.left = `${paddle1X}px`;
+      paddle1.style.top = `${paddle1Y}px`;
+      paddle2.style.left = `${paddle2X}px`;
+      paddle2.style.top = `${paddle2Y}px`;
+    }
+
+    // Serve the ball
+    function serveBall() {
+      if (ballSpeed === 0) {
+        ballSpeed = 3; // Set ball speed
+        ballAngle = Math.random() * 2 * Math.PI; // Random initial angle
+        feedback.textContent = "Game started!";
+      }
+    }
+
+    // Move ball
+    function moveBall() {
+      if (!isReplaying) {
+        // Calculate ball movement using angle
+        const ballSpeedX = ballSpeed * Math.cos(ballAngle);
+        const ballSpeedY = ballSpeed * Math.sin(ballAngle);
+
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+        // Ball collision with walls (top and bottom)
+        if (ballY <= 0 || ballY >= gameHeight - 10) {
+          ballAngle = -ballAngle; // Reverse vertical direction
+        }
+
+        // Ball collision with paddles
+        const ballRadius = 5; // Ball radius
+
+        // Collision with left paddle (Player 1)
+        if (
+          ballX - ballRadius <= paddle1X + paddleWidth && // Ball is within paddle width
+          ballY + ballRadius >= paddle1Y && // Ball is within paddle height
+          ballY - ballRadius <= paddle1Y + paddleHeight
+        ) {
+          if (ballX - ballRadius <= paddle1X + paddleWidth && ballX - ballRadius >= paddle1X) {
+            ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
+            // Adjust ball angle based on where it hits the paddle
+            const hitPosition = (ballY - paddle1Y) / paddleHeight;
+            ballAngle += (hitPosition - 0.5) * 0.5; // Add a slight angle variation
+            player1LastMove = Date.now(); // Update last move time
+          }
+        }
+
+        // Collision with right paddle (Player 2)
+        if (
+          ballX + ballRadius >= paddle2X && // Ball is within paddle width
+          ballY + ballRadius >= paddle2Y && // Ball is within paddle height
+          ballY - ballRadius <= paddle2Y + paddleHeight
+        ) {
+          if (ballX + ballRadius >= paddle2X && ballX + ballRadius <= paddle2X + paddleWidth) {
+            ballAngle = Math.PI - ballAngle; // Reverse horizontal direction
+            // Adjust ball angle based on where it hits the paddle
+            const hitPosition = (ballY - paddle2Y) / paddleHeight;
+            ballAngle += (hitPosition - 0.5) * 0.5; // Add a slight angle variation
+            player2LastMove = Date.now(); // Update last move time
+          }
+        }
+
+        // Ball out of bounds (left or right)
+        if (ballX <= 0 || ballX >= gameWidth) {
+          const currentTime = Date.now();
+          const player1Active = player1LastMove !== null && currentTime - player1LastMove <= inactivityThreshold;
+          const player2Active = player2LastMove !== null && currentTime - player2LastMove <= inactivityThreshold;
+
+          // Only update score if both players are active
+          if (player1Active && player2Active) {
+            if (ballX <= 0) {
+              score2++;
+              player2ScoreDisplay.textContent = score2;
+              feedback.textContent = `${player2Input.value || "Player 2"} Scores!`;
+              updateHighScores(player2Input.value || "Player 2", score2);
+            } else if (ballX >= gameWidth) {
+              score1++;
+              player1ScoreDisplay.textContent = score1;
+              feedback.textContent = `${player1Input.value || "Player 1"} Scores!`;
+              updateHighScores(player1Input.value || "Player 1", score1);
+            }
+          } else {
+            feedback.textContent = "Score not updated: A player is inactive!";
+          }
+          resetBall();
+        }
+
+        ball.style.left = `${ballX}px`;
+        ball.style.top = `${ballY}px`;
+      }
+    }
+
+    // Reset ball position
+    function resetBall() {
+      ballX = gameWidth / 2 - 5;
+      ballY = gameHeight / 2 - 5;
+      ballSpeed = 0; // Stop the ball
+      ballAngle = Math.random() * 2 * Math.PI; // Random initial angle
+    }
+
+    // Keyboard controls for desktop
+    document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'w': // Move left paddle up
+          paddle1Y = Math.max(0, paddle1Y - 5);
+          player1LastMove = Date.now();
+          break;
+        case 's': // Move left paddle down
+          paddle1Y = Math.min(gameHeight - paddleHeight, paddle1Y + 5);
+          player1LastMove = Date.now();
+          break;
+        case 'a': // Move left paddle left
+          paddle1X = Math.max(0, paddle1X - 5);
+          player1LastMove = Date.now();
+          break;
+        case 'd': // Move left paddle right
+          paddle1X = Math.min(gameWidth / 2 - paddleWidth, paddle1X + 5); // Prevent crossing midline
+          player1LastMove = Date.now();
+          break;
+        case 'ArrowUp': // Move right paddle up
+          paddle2Y = Math.max(0, paddle2Y - 5);
+          player2LastMove = Date.now();
+          break;
+        case 'ArrowDown': // Move right paddle down
+          paddle2Y = Math.min(gameHeight - paddleHeight, paddle2Y + 5);
+          player2LastMove = Date.now();
+          break;
+        case 'ArrowLeft': // Move right paddle left
+          paddle2X = Math.max(gameWidth / 2, paddle2X - 5); // Prevent crossing midline
+          player2LastMove = Date.now();
+          break;
+        case 'ArrowRight': // Move right paddle right
+          paddle2X = Math.min(gameWidth - paddleWidth, paddle2X + 5);
+          player2LastMove = Date.now();
+          break;
+        case ' ': // Serve the ball (Space key)
+          serveBall();
+          break;
+      }
+      updatePaddles();
+    });
+
+    // Touch controls for mobile
+    let touchStartX1 = 0;
+    let touchStartY1 = 0;
+    let touchStartX2 = 0;
+    let touchStartY2 = 0;
+
+    paddle1.addEventListener('touchstart', (e) => {
+      touchStartX1 = e.touches[0].clientX - paddle1X;
+      touchStartY1 = e.touches[0].clientY - paddle1Y;
+    });
+
+    paddle1.addEventListener('touchmove', (e) => {
+      const touchX = e.touches[0].clientX - touchStartX1;
+      const touchY = e.touches[0].clientY - touchStartY1;
+      paddle1X = Math.max(0, Math.min(gameWidth / 2 - paddleWidth, touchX)); // Prevent crossing midline
+      paddle1Y = Math.max(0, Math.min(gameHeight - paddleHeight, touchY));
+      updatePaddles();
+      player1LastMove = Date.now();
+      e.preventDefault();
+    });
+
+    paddle2.addEventListener('touchstart', (e) => {
+      touchStartX2 = e.touches[0].clientX - paddle2X;
+      touchStartY2 = e.touches[0].clientY - paddle2Y;
+    });
+
+    paddle2.addEventListener('touchmove', (e) => {
+      const touchX = e.touches[0].clientX - touchStartX2;
+      const touchY = e.touches[0].clientY - touchStartY2;
+      paddle2X = Math.max(gameWidth / 2, Math.min(gameWidth - paddleWidth, touchX)); // Prevent crossing midline
+      paddle2Y = Math.max(0, Math.min(gameHeight - paddleHeight, touchY));
+      updatePaddles();
+      player2LastMove = Date.now();
+      e.preventDefault();
+    });
+
+    // Serve the ball on screen tap
+    gameArea.addEventListener('touchstart', () => {
+      serveBall();
+    });
+
+    // Replay moves
+    function replayMoves() {
+      if (recordedMoves.length === 0) {
+        feedback.textContent = "No moves recorded!";
+        return;
+      }
+      isReplaying = true;
+      replayIndex = 0;
+      feedback.textContent = "Replaying moves...";
+    }
+
+    // New Game (start from scratch)
+    function newGame() {
+      score1 = 0;
+      score2 = 0;
+      player1ScoreDisplay.textContent = "0";
+      player2ScoreDisplay.textContent = "0";
+
+      document.getElementById("player1-name").textContent = player1Input.value || "Player 1";
+      document.getElementById("player2-name").textContent = player2Input.value || "Player 2";
+
+      resetBall();
+      feedback.textContent = "";
+      recordedMoves = [];
+      isReplaying = false;
+      replayIndex = 0;
+
+      // Reset high scores
+      highScores = [];
+      highScoresBody.innerHTML = "";
+
+      // Reset player activity tracking
+      player1LastMove = null;
+      player2LastMove = null;
+      activityStatus.textContent = "Waiting for players to start...";
+    }
+
+    // Reset Game (reset scores and ball position)
+    function resetGame() {
+      score1 = 0;
+      score2 = 0;
+      player1ScoreDisplay.textContent = "0";
+      player2ScoreDisplay.textContent = "0";
+      feedback.textContent = "";
+      resetBall();
+    }
+
+    // Update high scores
+    function updateHighScores(playerName, score) {
+      highScores.push({ playerName, score });
+      highScores.sort((a, b) => b.score - a.score);
+      highScores = highScores.slice(0, 5);
+
+      highScoresBody.innerHTML = highScores
+        .map((entry, index) => `
+          <tr>
+            <td>${entry.playerName}</td>
+            <td>${entry.score}</td>
+          </tr>
+        `)
+        .join("");
+    }
+
+    // Check player activity
+    function checkPlayerActivity() {
+      const currentTime = Date.now();
+      const player1Active = player1LastMove !== null && currentTime - player1LastMove <= inactivityThreshold;
+      const player2Active = player2LastMove !== null && currentTime - player2LastMove <= inactivityThreshold;
+
+      if (!player1Active || !player2Active) {
+        activityStatus.textContent = `Inactive: ${
+          !player1Active ? player1Input.value || "Player 1" : ""
+        }${!player1Active && !player2Active ? " and " : ""}${
+          !player2Active ? player2Input.value || "Player 2" : ""
+        }`;
+      } else {
+        activityStatus.textContent = "Both players are active!";
+      }
+    }
+
+    // Game loop
+    function gameLoop() {
+      if (!isReplaying) {
+        moveBall();
+        recordMove();
+        checkPlayerActivity();
+      } else if (replayIndex < recordedMoves.length) {
+        const move = recordedMoves[replayIndex];
+        paddle1X = move.paddle1X;
+        paddle1Y = move.paddle1Y;
+        paddle2X = move.paddle2X;
+        paddle2Y = move.paddle2Y;
+        ballX = move.ballX;
+        ballY = move.ballY;
+        updatePaddles();
+        ball.style.left = `${ballX}px`;
+        ball.style.top = `${ballY}px`;
+        replayIndex++;
+      } else {
+        isReplaying = false;
+        feedback.textContent = "Replay finished!";
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Show popup when the page loads
+    showPopup();
+
+    // Start game loop
+    gameLoop();
+  </script>
+</body>
+</html>
